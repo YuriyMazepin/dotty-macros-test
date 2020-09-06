@@ -15,12 +15,15 @@ def caseCodecAutoImpl[A: Type](using qctx: QuoteContext): Expr[MessageCodec[A]] 
   val t = summon[Type[A]]
   val symbol = t.unseal.tpe.typeSymbol
 
+  val valueParams = symbol.primaryConstructor.paramSymss.find(_.headOption.fold(false)( _.isTerm)).getOrElse(Nil)
+
   val str = s"""
   Type annots: ${symbol.annots}
   Case fields annots ${symbol.caseFields.map(_.annots)}
+  Primary constructor params annots ${valueParams.map(_.annots)}
   """
   val strExpr = Expr(str)
-  
+
   '{
     new MessageCodec[A] {
       override def prepare(a: A): String = $strExpr
